@@ -6,16 +6,11 @@ OLLAMA_ENDPOINT = "http://localhost:11434/api/generate"
 
 def ollama_prompt(code, model="llama3.2", max_retries=3):
     """Generate prompts using local Ollama model"""
-    system_prompt = """You are a Manim animation expert. Analyze the provided Python code and create a concise, 
-natural language prompt that describes the animation being created. Follow these rules:
-1. Identify key visual elements (shapes, graphs, 3D objects)
-2. Recognize transformations (rotations, fades, transforms)
-3. Note mathematical concepts (equations, vectors, functions)
-4. Mention animation sequence if multiple steps
-5. Use format: <Verb> <subject> <action> [with/of <details>]
-Example: "Animate a rotating cube that transforms into a sphere while showing coordinate axes"
-
-Keep prompts under 20 words and avoid technical terms like 'class' or 'self'."""
+    system_prompt = """You are a Manim animation expert. Analyze this Manim code and create a concise natural language prompt that describes its functionality. Follow these rules:
+1. Start with action verbs like "Create", "Demonstrate", or "Show"
+2. Mention key visual elements and transformations
+3. Keep under 20 words
+4. Avoid technical terms like 'class' or 'method'"""
 
     full_prompt = f"{system_prompt}\n\nManim code:\n{code}\n\nPrompt:"
 
@@ -50,17 +45,18 @@ def enhance_dataset(input_path, output_path):
     
     for i, entry in enumerate(entries):
         code = entry['response']
-        try:
-            new_prompt = ollama_prompt(code)
-            enhanced.append({
-                "prompt": new_prompt,
-                "response": code,
-                "original_prompt": entry.get('prompt', '')
-            })
-            print(f"Processed {i+1}/{len(entries)}")
-            sleep(1)  # Add delay between requests
-        except Exception as e:
-            print(f"Error processing entry {i}: {str(e)}")
+        if code.strip() != "":
+            try:
+                new_prompt = ollama_prompt(code)
+                enhanced.append({
+                    "prompt": new_prompt,
+                    "response": code,
+                    "original_prompt": entry.get('prompt', '')
+                })
+                print(f"Processed {i+1}/{len(entries)}")
+                sleep(1)  # Add delay between requests
+            except Exception as e:
+                print(f"Error processing entry {i}: {str(e)}")
     
     with open(output_path, 'w') as f:
         for entry in enhanced:
@@ -68,6 +64,6 @@ def enhance_dataset(input_path, output_path):
 
 # Usage
 enhance_dataset(
-    input_path='manim_function_prompt_response.jsonl',
-    output_path='manim_ollama_function_examples_dataset.jsonl'
+    input_path='manimml_dataset.jsonl',
+    output_path='manim_ollama_ml_dataset.jsonl'
 )
